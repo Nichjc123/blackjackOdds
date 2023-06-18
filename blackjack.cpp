@@ -1,49 +1,90 @@
 #include <iostream>
 #include <iomanip>
+#include <cmath>
 #include <map>
 
 void displayStartup();
 void setCard(int &total, bool isDealer);
 double oddsofBusting(int total);
+double oddsofDealerBusting(int total);
+void printResults(double playerOdds, double dealerOdds);
 
 using namespace std;
 
 map<string,int> Card_Values = {{"2",2},{"3",3},{"4",4},{"5",5},{"6",6},{"7",7},{"8",8},{"9",9},{"10",10},{"A",11},{"J",10},{"Q",10},{"K",10}};
 bool playerHasAce{false};
-bool dealerHasAce{false};
 
-//TODO: Handle A input (for now its decrementing total by 1 which is wrong :( )
+void printResults(double playerOdds, double dealerOdds)
+{
+        //Output odds of losing(busting) on hit
+        if (!playerHasAce)
+        {
+            cout << "Odds of losing on hit: [" << playerOdds  << "%] ";
+        }
+
+        //Output odds of losing(dealer busting) on stand
+        cout << "Odds of losing on stand: [" << dealerOdds << "%]" << endl;
+}
 
 int main() {
-    displayStartup();
-
-    //Set Dealer Total
-    int dealersTotal{0};
-    setCard(dealersTotal, true);
-
-    //Set player total
-    int playerTotal{0};
-    setCard(playerTotal, false);
-    setCard(playerTotal, false);
-
-    //Output odds of losing(busting) on hit
-    if (!playerHasAce)
+    while(1)
     {
-        cout << "Odds of losing on hit: [" << oddsofBusting(playerTotal) << "%]";
+        string userSelection;
+        displayStartup();
+
+        playerHasAce = false;
+        //Set Dealer Total
+        int dealersTotal{0};
+        setCard(dealersTotal, true);
+
+        //Set player total
+        int playerTotal{0};
+        setCard(playerTotal, false);
+        setCard(playerTotal, false);
+
+        cout << endl;
+
+        printResults(round((oddsofBusting(playerTotal) * 100) * 100.0) / 100.0, round(((1 - oddsofDealerBusting(dealersTotal)) * 100) * 100.0) / 100.0);
+
+        while(1) {
+            //Prompt to Hit, start a new hand or quit
+            cout << "Press H: hit, Press N: new hand, Press Q: quit" << endl;
+            cin>>userSelection;
+            if (userSelection == "H")
+            { 
+                setCard(playerTotal, false);
+                if (playerTotal < 22)
+                {
+                    printResults(round((oddsofBusting(playerTotal) * 100) * 100.0) / 100.0, round(((1 - oddsofDealerBusting(dealersTotal)) * 100) * 100.0) / 100.0);
+                }
+            }
+            else if (userSelection == "N")
+            {
+                break;
+            }
+            else if (userSelection == "Q")
+            {
+                break;
+            }
+            else {
+                cout << "You have entered invalid input please try again." << endl;
+                cin.clear(); 
+            }
+        }
+        if (userSelection == "N") {
+            continue;
+        } else {
+            break;
+        }
     }
-
-    //Output odds of losing(dealer busting) on stand
-    if (!dealerHasAce)
-    {
-        cout << "Odds of losing on stand: [" << 1 - oddsofBusting(dealersTotal) << "%]";
-    }
-
-    // prompt to hit / new hand
-    // hit (prompt to enter new card and recalculate odds of winning and busting on next hit) 
-
-    // ALWAYS prompt for new hand
-
     return 0;
+}
+
+double oddsofDealerBusting(int total)
+{
+    //data from wizardofodds.com
+    map<int, double> dealerOdds = {{2,0.35473},{3,0.372750},{4,0.39594},{5,0.41562},{6,0.42197},{7,0.261690},{8,0.24462},{9,0.22958},{10,0.210600},{11,0.132580}};
+    return dealerOdds.find(total)->second;
 }
 
 double oddsofBusting(int total)
@@ -63,7 +104,7 @@ double oddsofBusting(int total)
     if (total <= 11) {
         return 0;
     } else {
-        return (total - 8) / 13;
+        return (total - 8.0) / 13.0;
     }
 }
 
@@ -105,5 +146,11 @@ void setCard(int &total, bool isDealer)
         }
     }
     total += Card_Values.find(in)->second;
-
+    if (!isDealer && Card_Values.find(in)->second == 11)
+    {
+        playerHasAce = true;
+    }
+    if (total > 21){
+        cout << "You have lost please press Q or N" << endl;
+    }
 }
